@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useMemo } from "react";
@@ -13,7 +14,6 @@ import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
 import { formatNumber, formatDate, formatDuration, formatMinutes, daysSince } from "@/lib/utils";
 import { EvergreenBar } from "./evergreen-bar";
 import { InlineEdit } from "./inline-edit";
-import Image from "next/image";
 
 export interface VideoRow {
   id: string;
@@ -69,7 +69,7 @@ export function VideosTable({
               className="relative flex-shrink-0 overflow-hidden rounded"
             >
               {row.original.thumbnail_url ? (
-                <Image
+                <img
                   src={row.original.thumbnail_url}
                   alt=""
                   width={80}

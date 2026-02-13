@@ -1,9 +1,10 @@
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getRedirectUrl } from "@/lib/youtube";
 
 export async function GET(request: NextRequest) {
+  const sql = getDb();
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
     return NextResponse.redirect(new URL("/setup?error=no_code", request.url));

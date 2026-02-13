@@ -1,10 +1,11 @@
-import { sql } from "./db";
+import { getDb } from "./db";
 import { getOAuth2Client, fetchAllChannelVideos, fetchAnalyticsData } from "./youtube";
 import { calculateEvergreenScore, normalizeEvergreenScores } from "./evergreen";
 import { detectBrand, detectTopic } from "./auto-detect";
 import { google } from "googleapis";
 
 export async function runSync() {
+  const sql = getDb();
   const logRes = await sql`
     INSERT INTO sync_log (started_at, status) VALUES (NOW(), 'running') RETURNING id
   `;
@@ -53,8 +54,8 @@ export async function runSync() {
       const isShort = analytics?.isShort || video.durationSeconds <= 60;
 
       // Auto-detect topic and brand only if not manually set
-      let topic = existing?.topic_auto === false ? existing.topic : detectTopic(video.title);
-      let brand = existing?.brand_auto === false ? existing.brand : detectBrand(video.title);
+      const topic = existing?.topic_auto === false ? existing.topic : detectTopic(video.title);
+      const brand = existing?.brand_auto === false ? existing.brand : detectBrand(video.title);
       const topicAuto = existing?.topic_auto === false ? false : true;
       const brandAuto = existing?.brand_auto === false ? false : true;
 

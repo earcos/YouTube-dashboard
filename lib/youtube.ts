@@ -1,7 +1,8 @@
 import { google } from "googleapis";
-import { sql } from "./db";
+import { getDb } from "./db";
 
 export async function getOAuth2Client() {
+  const sql = getDb();
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -45,8 +46,8 @@ function parseDuration(iso8601: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-export async function fetchAllChannelVideos(auth: ReturnType<typeof google.auth.OAuth2 extends new (...args: infer A) => infer R ? (...args: A) => R : never> extends (...args: unknown[]) => infer R ? R : never) {
-  const youtube = google.youtube({ version: "v3", auth: auth as InstanceType<typeof google.auth.OAuth2> });
+export async function fetchAllChannelVideos(auth: InstanceType<typeof google.auth.OAuth2>) {
+  const youtube = google.youtube({ version: "v3", auth });
   const channelId = process.env.YOUTUBE_CHANNEL_ID!;
 
   // Get uploads playlist ID
