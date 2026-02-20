@@ -96,6 +96,22 @@ export async function GET(request: NextRequest) {
         `;
         countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE is_short = false`;
       }
+    } else if (evergreen && type === "longform") {
+      videos = await sql`
+        SELECT * FROM videos
+        WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = false
+        ORDER BY evergreen_score DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = false`;
+    } else if (evergreen && type === "short") {
+      videos = await sql`
+        SELECT * FROM videos
+        WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = true
+        ORDER BY evergreen_score DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = true`;
     } else if (evergreen) {
       videos = await sql`
         SELECT * FROM videos
