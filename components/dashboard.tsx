@@ -8,7 +8,13 @@ import { SyncStatus } from "./sync-status";
 import { VideosTable, type VideoRow } from "./videos-table";
 import { AggregationTable, type AggRow } from "./aggregation-table";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string) =>
+  fetch(url).then((r) => {
+    if (!r.ok) {
+      console.log("[v0] API error for", url, r.status, r.statusText);
+    }
+    return r.json();
+  });
 
 type TabValue = "all" | "longform" | "shorts" | "evergreen" | "topics" | "brands";
 
@@ -95,10 +101,11 @@ export function Dashboard() {
   const topics: AggRow[] = statsData?.topics || [];
   const brands: AggRow[] = statsData?.brands || [];
 
-  const topicSuggestions = topics.map((t: AggRow) => t.topic!).filter(Boolean);
-  const brandSuggestions = brands.map((b: AggRow) => b.brand!).filter(Boolean);
+  const topicSuggestions = topics.map((t: AggRow) => t.topic).filter(Boolean) as string[];
+  const brandSuggestions = brands.map((b: AggRow) => b.brand).filter(Boolean) as string[];
 
-  const isConnected = statsData?.isConnected || false;
+  const isConnected = statsData?.isConnected ?? false;
+  const hasError = !!statsData?.error;
   const overview = statsData?.overview;
   const lastSync = statsData?.lastSync;
 
@@ -127,6 +134,13 @@ export function Dashboard() {
 
       <main className="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-6">
+          {/* Error display */}
+          {hasError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {statsData?.error}
+            </div>
+          )}
+
           {/* Stats Cards */}
           {overview && !statsLoading && <StatsCards stats={overview} />}
 
@@ -194,7 +208,7 @@ export function Dashboard() {
             )}
 
             {/* Content */}
-            {videosLoading || statsLoading ? (
+            {(videosLoading || statsLoading) && !(activeTab === "topics" && !drillDown) && !(activeTab === "brands" && !drillDown) ? (
               <div className="flex items-center justify-center py-20">
                 <div className="flex flex-col items-center gap-3">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
