@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
       videos = await sql`
         SELECT v.*,
           COALESCE(
-            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, s2.snapshot_date - s1.snapshot_date)
              FROM view_snapshots s1, view_snapshots s2
              WHERE s1.video_id = v.id AND s2.video_id = v.id
                AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s1.snapshot_date < s2.snapshot_date
-            ), 0
+            ), v.view_count::real / GREATEST(1, EXTRACT(EPOCH FROM (NOW() - v.published_at)) / 86400)
           ) as recent_views_per_day
         FROM videos v
         WHERE v.published_at < NOW() - INTERVAL '90 days' AND v.is_short = false
@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
       videos = await sql`
         SELECT v.*,
           COALESCE(
-            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, s2.snapshot_date - s1.snapshot_date)
              FROM view_snapshots s1, view_snapshots s2
              WHERE s1.video_id = v.id AND s2.video_id = v.id
                AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s1.snapshot_date < s2.snapshot_date
-            ), 0
+            ), v.view_count::real / GREATEST(1, EXTRACT(EPOCH FROM (NOW() - v.published_at)) / 86400)
           ) as recent_views_per_day
         FROM videos v
         WHERE v.published_at < NOW() - INTERVAL '90 days' AND v.is_short = true
@@ -60,13 +60,13 @@ export async function GET(request: NextRequest) {
       videos = await sql`
         SELECT v.*,
           COALESCE(
-            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, s2.snapshot_date - s1.snapshot_date)
              FROM view_snapshots s1, view_snapshots s2
              WHERE s1.video_id = v.id AND s2.video_id = v.id
                AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
                AND s1.snapshot_date < s2.snapshot_date
-            ), 0
+            ), v.view_count::real / GREATEST(1, EXTRACT(EPOCH FROM (NOW() - v.published_at)) / 86400)
           ) as recent_views_per_day
         FROM videos v
         WHERE v.published_at < NOW() - INTERVAL '90 days'

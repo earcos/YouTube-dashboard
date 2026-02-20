@@ -59,8 +59,9 @@ export async function runSync() {
       const existing = existingMap.get(video.id);
       const evergreenScore = normalizedScores.get(video.id) || 0;
 
-      // Determine short status: analytics API takes priority, fallback to duration
-      const isShort = analytics?.isShort || video.durationSeconds <= 60;
+      // Determine short status: analytics API (creatorContentType) is authoritative,
+      // only fall back to duration-based detection if analytics data is unavailable
+      const isShort = analytics ? analytics.isShort : video.durationSeconds <= 60;
 
       // Auto-detect topic and brand only if not manually set
       const topic = existing?.topic_auto === false ? existing.topic : detectTopic(video.title);
