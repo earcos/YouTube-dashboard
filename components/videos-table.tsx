@@ -149,24 +149,23 @@ export function VideosTable({
         ),
       },
       ...(showEvergreen
-        ? [
+        ? ([
             {
               id: "recent_views_per_day",
               header: "Recent Views/Day",
-              accessorFn: (row: VideoRow) => {
-                // recent_views_per_day comes from the API when querying evergreen
-                return (row as VideoRow & { recent_views_per_day?: number }).recent_views_per_day ?? null;
+              accessorFn: (row) => {
+                return (row as VideoRow & { recent_views_per_day?: number }).recent_views_per_day ?? 0;
               },
-              cell: ({ getValue }: { getValue: () => number | null }) => {
-                const val = getValue();
+              cell: ({ getValue }) => {
+                const val = getValue() as number;
                 return (
                   <span className="font-mono text-sm">
-                    {val != null ? Math.round(val).toLocaleString() : "--"}
+                    {val > 0 ? Math.round(val).toLocaleString() : "--"}
                   </span>
                 );
               },
-            } satisfies ColumnDef<VideoRow>,
-          ]
+            },
+          ] as ColumnDef<VideoRow>[])
         : []),
       {
         accessorKey: "topic",
