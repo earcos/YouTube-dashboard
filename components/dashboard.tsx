@@ -16,13 +16,14 @@ const fetcher = (url: string) =>
     return r.json();
   });
 
-type TabValue = "all" | "longform" | "shorts" | "evergreen" | "topics" | "brands";
+type TabValue = "all" | "longform" | "shorts" | "evergreen-longform" | "evergreen-shorts" | "topics" | "brands";
 
 const tabs: { value: TabValue; label: string; icon: React.ElementType }[] = [
   { value: "all", label: "All Videos", icon: LayoutGrid },
   { value: "longform", label: "Longform", icon: Film },
   { value: "shorts", label: "Shorts", icon: Zap },
-  { value: "evergreen", label: "Evergreen", icon: TrendingUp },
+  { value: "evergreen-longform", label: "Longform Evergreen", icon: TrendingUp },
+  { value: "evergreen-shorts", label: "Shorts Evergreen", icon: TrendingUp },
   { value: "topics", label: "Topics", icon: Tag },
   { value: "brands", label: "Brands", icon: Building2 },
 ];
@@ -54,7 +55,14 @@ export function Dashboard() {
     const params = new URLSearchParams();
     if (tab === "longform") params.set("type", "longform");
     if (tab === "shorts") params.set("type", "short");
-    if (tab === "evergreen") params.set("evergreen", "true");
+    if (tab === "evergreen-longform") {
+      params.set("evergreen", "true");
+      params.set("type", "longform");
+    }
+    if (tab === "evergreen-shorts") {
+      params.set("evergreen", "true");
+      params.set("type", "short");
+    }
     if (searchQuery) params.set("search", searchQuery);
     if (drill?.type === "topic") params.set("topic", drill.value);
     if (drill?.type === "brand") params.set("brand", drill.value);
@@ -174,7 +182,7 @@ export function Dashboard() {
             </nav>
 
             {/* Search (for video tabs) */}
-            {(activeTab === "all" || activeTab === "longform" || activeTab === "shorts") && (
+            {(activeTab === "all" || activeTab === "longform" || activeTab === "shorts" || activeTab === "evergreen-longform" || activeTab === "evergreen-shorts") && (
               <div className="relative max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -221,14 +229,15 @@ export function Dashboard() {
                 {(activeTab === "all" ||
                   activeTab === "longform" ||
                   activeTab === "shorts" ||
-                  activeTab === "evergreen" ||
+                  activeTab === "evergreen-longform" ||
+                  activeTab === "evergreen-shorts" ||
                   drillDown) && (
                   <VideosTable
                     videos={videos}
                     onUpdateField={handleUpdateField}
                     topicSuggestions={topicSuggestions}
                     brandSuggestions={brandSuggestions}
-                    showEvergreen={activeTab === "evergreen"}
+                    showEvergreen={activeTab === "evergreen-longform" || activeTab === "evergreen-shorts"}
                   />
                 )}
 
