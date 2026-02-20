@@ -20,7 +20,61 @@ export async function GET(request: NextRequest) {
     let videos;
     let countResult;
 
-    if (type === "short") {
+    if (evergreen && type === "longform") {
+      videos = await sql`
+        SELECT v.*,
+          COALESCE(
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+             FROM view_snapshots s1, view_snapshots s2
+             WHERE s1.video_id = v.id AND s2.video_id = v.id
+               AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s1.snapshot_date < s2.snapshot_date
+            ), 0
+          ) as recent_views_per_day
+        FROM videos v
+        WHERE v.published_at < NOW() - INTERVAL '90 days' AND v.is_short = false
+        ORDER BY v.evergreen_score DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = false`;
+    } else if (evergreen && type === "short") {
+      videos = await sql`
+        SELECT v.*,
+          COALESCE(
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+             FROM view_snapshots s1, view_snapshots s2
+             WHERE s1.video_id = v.id AND s2.video_id = v.id
+               AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s1.snapshot_date < s2.snapshot_date
+            ), 0
+          ) as recent_views_per_day
+        FROM videos v
+        WHERE v.published_at < NOW() - INTERVAL '90 days' AND v.is_short = true
+        ORDER BY v.evergreen_score DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = true`;
+    } else if (evergreen) {
+      videos = await sql`
+        SELECT v.*,
+          COALESCE(
+            (SELECT (s2.view_count - s1.view_count)::real / GREATEST(1, EXTRACT(EPOCH FROM (s2.snapshot_date - s1.snapshot_date)) / 86400)
+             FROM view_snapshots s1, view_snapshots s2
+             WHERE s1.video_id = v.id AND s2.video_id = v.id
+               AND s1.snapshot_date = (SELECT MIN(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s2.snapshot_date = (SELECT MAX(snapshot_date) FROM view_snapshots WHERE video_id = v.id AND snapshot_date >= CURRENT_DATE - INTERVAL '30 days')
+               AND s1.snapshot_date < s2.snapshot_date
+            ), 0
+          ) as recent_views_per_day
+        FROM videos v
+        WHERE v.published_at < NOW() - INTERVAL '90 days'
+        ORDER BY v.evergreen_score DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days'`;
+    } else if (type === "short") {
       if (search) {
         videos = await sql`
           SELECT * FROM videos WHERE is_short = true AND title ILIKE ${"%" + search + "%"}
@@ -96,30 +150,6 @@ export async function GET(request: NextRequest) {
         `;
         countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE is_short = false`;
       }
-    } else if (evergreen && type === "longform") {
-      videos = await sql`
-        SELECT * FROM videos
-        WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = false
-        ORDER BY evergreen_score DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = false`;
-    } else if (evergreen && type === "short") {
-      videos = await sql`
-        SELECT * FROM videos
-        WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = true
-        ORDER BY evergreen_score DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days' AND is_short = true`;
-    } else if (evergreen) {
-      videos = await sql`
-        SELECT * FROM videos
-        WHERE published_at < NOW() - INTERVAL '90 days'
-        ORDER BY evergreen_score DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      countResult = await sql`SELECT COUNT(*) as total FROM videos WHERE published_at < NOW() - INTERVAL '90 days'`;
     } else if (topic) {
       videos = await sql`
         SELECT * FROM videos WHERE topic = ${topic}

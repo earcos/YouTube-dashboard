@@ -1,6 +1,6 @@
 import { getDb } from "./db";
 import { getOAuth2Client, fetchAllChannelVideos, fetchAnalyticsData } from "./youtube";
-import { calculateEvergreenScore, normalizeEvergreenScores } from "./evergreen";
+import { calculateEvergreenScores, recordSnapshots } from "./evergreen";
 import { detectBrand, detectTopic } from "./auto-detect";
 import { google } from "googleapis";
 
@@ -37,12 +37,21 @@ export async function runSync() {
     const existingVideos = await sql`SELECT id, topic, brand, topic_auto, brand_auto FROM videos`;
     const existingMap = new Map(existingVideos.map((v) => [v.id, v]));
 
-    // Calculate evergreen scores
-    const rawScores = videos.map((v) => ({
-      id: v.id,
-      rawScore: calculateEvergreenScore(v.viewCount, v.publishedAt),
-    }));
-    const normalizedScores = normalizeEvergreenScores(rawScores);
+    // Record daily view snapshots for evergreen tracking
+    await recordSnapshots(
+      sql,
+      videos.map((v) => ({ id: v.id, viewCount: v.viewCount }))
+    );
+
+    // Calculate snapshot-based evergreen scores
+    const normalizedScores = await calculateEvergreenScores(
+      sql,
+      videos.map((v) => ({
+        id: v.id,
+        view_count: v.viewCount,
+        published_at: v.publishedAt,
+      }))
+    );
 
     // Upsert videos
     for (const video of videos) {

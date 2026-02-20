@@ -137,7 +137,7 @@ export function VideosTable({
       },
       {
         id: "views_per_day",
-        header: "Views/Day",
+        header: "Avg Views/Day",
         accessorFn: (row) => {
           const days = daysSince(row.published_at);
           return days > 0 ? row.view_count / days : row.view_count;
@@ -148,6 +148,25 @@ export function VideosTable({
           </span>
         ),
       },
+      ...(showEvergreen
+        ? ([
+            {
+              id: "recent_views_per_day",
+              header: "Recent Views/Day",
+              accessorFn: (row) => {
+                return (row as VideoRow & { recent_views_per_day?: number }).recent_views_per_day ?? 0;
+              },
+              cell: ({ getValue }) => {
+                const val = getValue() as number;
+                return (
+                  <span className="font-mono text-sm">
+                    {val > 0 ? Math.round(val).toLocaleString() : "--"}
+                  </span>
+                );
+              },
+            },
+          ] as ColumnDef<VideoRow>[])
+        : []),
       {
         accessorKey: "topic",
         header: "Topic",
