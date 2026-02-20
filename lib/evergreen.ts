@@ -76,7 +76,8 @@ export async function calculateEvergreenScores(
 
   // Group snapshots by video
   const snapshotMap = new Map<string, SnapshotRow[]>();
-  for (const s of snapshots) {
+  for (const row of snapshots) {
+    const s = row as unknown as SnapshotRow;
     const list = snapshotMap.get(s.video_id) || [];
     list.push(s);
     snapshotMap.set(s.video_id, list);
