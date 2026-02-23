@@ -59,9 +59,11 @@ export async function runSync() {
       const existing = existingMap.get(video.id);
       const evergreenScore = normalizedScores.get(video.id) || 0;
 
-      // Determine short status: analytics API (creatorContentType) is authoritative,
-      // only fall back to duration-based detection if analytics data is unavailable
-      const isShort = analytics ? analytics.isShort : video.durationSeconds <= 60;
+      // Determine short status using both sources:
+      // - Analytics API creatorContentType == "SHORTS" is a positive signal
+      // - Duration <= 60s is also a positive signal (catches shorts the API missed)
+      // A video is a short if EITHER source says it is
+      const isShort = (analytics?.isShort === true) || video.durationSeconds <= 60;
 
       // Auto-detect topic and brand only if not manually set
       const topic = existing?.topic_auto === false ? existing.topic : detectTopic(video.title);
