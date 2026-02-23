@@ -37,13 +37,7 @@ export async function runSync() {
     const existingVideos = await sql`SELECT id, topic, brand, topic_auto, brand_auto FROM videos`;
     const existingMap = new Map(existingVideos.map((v) => [v.id, v]));
 
-    // Record daily view snapshots for evergreen tracking
-    await recordSnapshots(
-      sql,
-      videos.map((v) => ({ id: v.id, viewCount: v.viewCount }))
-    );
-
-    // Calculate snapshot-based evergreen scores
+    // Calculate snapshot-based evergreen scores (uses existing snapshots)
     const normalizedScores = await calculateEvergreenScores(
       sql,
       videos.map((v) => ({
@@ -107,6 +101,12 @@ export async function runSync() {
           updated_at = NOW()
       `;
     }
+
+    // Record daily view snapshots AFTER videos are upserted (FK constraint)
+    await recordSnapshots(
+      sql,
+      videos.map((v) => ({ id: v.id, viewCount: v.viewCount }))
+    );
 
     await sql`
       UPDATE sync_log SET
